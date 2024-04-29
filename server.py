@@ -115,7 +115,15 @@ def get_response_messages(user_message: Text):
 
 
 def get_whatsapp_message(request):
+    print("WHATSAPP EVENT: ", request.json)
     value = request.json.get("entry")[0].get("changes")[0].get("value")
     if value.get("messages"):
-        return value.get("messages")[0].get("text").get("body")
+        message = value.get("messages")[0]
+        if message.get('interactive'):
+            interactive = message.get('interactive')
+            vote = interactive.get("button_reply").get("id")
+            print("CONVERSATION COMMENT VOTE: ", vote)
+            return vote
+        else:
+            return value.get("messages")[0].get("text").get("body")
     return ""
