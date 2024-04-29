@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "whatsapp-api-integration"
+version = "0.1.0"
+description = "A Flask server to receive WhatsApp Cloud API Events"
+authors = ["David Carlos <ddavidcarlos1392@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.31.0"
+Flask = "^3.0.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
