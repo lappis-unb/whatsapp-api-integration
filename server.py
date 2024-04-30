@@ -1,25 +1,30 @@
 from dataclasses import dataclass, field
 import json
+import logging
 from typing import Any, Dict, Text
+import os
 
 from flask import Flask, request
 import requests
-import logging
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
-        
 
 @dataclass
 class NotImplementedMessage:
-    message: dict
-    text: str = ""
+    message: Dict
+    text: Text = ""
+
 
 @dataclass
 class InteractiveButtonMessage:
-    message: dict
-    text: str = ""
+    message: Dict
+    text: Text = ""
 
     def __post_init__(self):
         self.set_message()
@@ -32,8 +37,8 @@ class InteractiveButtonMessage:
 
 @dataclass
 class TextMessage:
-    message: dict
-    text: str = ""
+    message: Dict
+    text: Text = ""
 
     def __post_init__(self):
         self.set_message()
@@ -52,7 +57,9 @@ class WhatsAppEvent:
         }
     )
 
-    def get_event_message(self) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
+    def get_event_message(
+        self,
+    ) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
         event_changes = self.event["entry"][0]["changes"][0]
         event_value = event_changes.get("value")
         event_messages = event_value.get("messages")
@@ -92,6 +99,7 @@ RESPONSE_MESSAGES = [
     },
 ]
 
+
 # Reimplement this class with your message backend.
 @dataclass
 class ResponseService:
@@ -103,13 +111,18 @@ class ResponseService:
             return []
         return RESPONSE_MESSAGES
 
+
 @dataclass
 class WhatsAppApiClient:
-    url: str = "https://graph.facebook.com/v19.0/326737040513319/messages"
-    headers = {
-        "Authorization": "Bearer EAARUraCBHf4BOZBevHmWkp9FGhFiILtoPItzSgc2trYBxcZAh26cvZApvMlNaFDF8ROXQGdgPGtFAxEawRuyFLesf7VX5gFoP3G5jaPjbeK3K9EJIgDOYQDJIF5zWbpUTaTfEC2qtizPzpNeH7PgvSFbAv11GNZBruiew72YIFG2pRS6IerpOZCrBiyA3mME4x8Jr83NAGo0hPyONMLwZD",
-        "Content-Type": "application/json",
-    }
+    url: Text = "https://graph.facebook.com/v19.0/326737040513319/messages"
+    headers: Dict[Text, Text] = field(
+        default_factory=lambda: (
+            {
+                "Authorization": f"Bearer {os.getenv("WPP_AUTHORIZATION_TOKEN", "")}",
+                "Content-Type": "application/json",
+            }
+        )
+    )
 
     def get_message_type(self, rasa_message: Any):
         if rasa_message.get("buttons"):
@@ -161,24 +174,27 @@ class WhatsAppApiClient:
         return response.text, response.status_code
 
 
+def verify_webhook(request):
+    if request.args.get("hub.verify_token") != "1234":
+        return "Invalid verify token", 500
+    return request.args.get("hub.challenge")
+
+
+def respond_to_whatsapp_event(request):
+    logging_whatsapp_event()
+    whatsapp_event = WhatsAppEvent(event=request.json)
+    message = whatsapp_event.get_event_message()
+    response_service = ResponseService(message)
+    responses = response_service.get_responses_to_message()
+    wpp_client = WhatsAppApiClient()
+    for response in responses:
+        wpp_client.send_message(response)
+    return "ok", 200
+
+
 @app.route("/webhooks/whatsapp", methods=["GET", "POST"])
 def webhook():
     if request.method == "GET":
-        if request.args.get("hub.verify_token") != "1234":
-            return "Invalid verify token", 500
-        return request.args.get("hub.challenge")
+        return verify_webhook(request)
     if request.method == "POST":
-        logging_whatsapp_event()
-        message = get_whatsapp_message(request)
-        response_service = ResponseService(message)
-        responses = response_service.get_responses_to_message()
-        wpp_client = WhatsAppApiClient()
-        for response in responses:
-            response_text, status_code = wpp_client.send_message(response)
-        return "ok", 200
-
-
-def get_whatsapp_message(request) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
-    whatsapp_event = WhatsAppEvent(event=request.json)
-    message = whatsapp_event.get_event_message()
-    return message
+        return respond_to_whatsapp_event(request)

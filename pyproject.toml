@@ -11,6 +11,7 @@ python = "^3.12"
 requests = "^2.31.0"
 Flask = "^3.0.3"
 black = "^24.4.2"
+python-dotenv = "^1.0.1"
 
 
 [build-system]
