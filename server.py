@@ -9,6 +9,7 @@ import logging
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
+        
 
 @dataclass
 class NotImplementedMessage:
@@ -91,6 +92,16 @@ RESPONSE_MESSAGES = [
     },
 ]
 
+# Reimplement this class with your message backend.
+@dataclass
+class ResponseService:
+
+    message: InteractiveButtonMessage | TextMessage | NotImplementedMessage
+
+    def get_responses_to_message(self) -> list:
+        if not self.message.text:
+            return []
+        return RESPONSE_MESSAGES
 
 @dataclass
 class WhatsAppApiClient:
@@ -159,37 +170,15 @@ def webhook():
     if request.method == "POST":
         logging_whatsapp_event()
         message = get_whatsapp_message(request)
-        messages = get_response_messages(message.text)
+        response_service = ResponseService(message)
+        responses = response_service.get_responses_to_message()
         wpp_client = WhatsAppApiClient()
-        for rasa_message in messages:
-            response_text, status_code = wpp_client.send_message(rasa_message)
+        for response in responses:
+            response_text, status_code = wpp_client.send_message(response)
         return "ok", 200
-
-
-# Reimplement this method with your message backend.
-def get_response_messages(user_message: Text):
-    if not user_message:
-        return []
-    return RESPONSE_MESSAGES
 
 
 def get_whatsapp_message(request) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
     whatsapp_event = WhatsAppEvent(event=request.json)
     message = whatsapp_event.get_event_message()
     return message
-
-# def get_whatsapp_message(request):
-#     print("WHATSAPP EVENT: ", request.json)
-#     value = request.json.get("entry")[0].get("changes")[0].get("value")
-#     if value.get("messages"):
-#         message = value.get("messages")[0]
-#         if message.get("interactive"):
-#             interactive = message.get("interactive")
-#             vote = interactive.get("button_reply").get("id")
-#             print("CONVERSATION COMMENT VOTE: ", vote)
-#             return vote
-#         else:
-#             user_message = value.get("messages")[0].get("text").get("body")
-#             print("USER MESSAGE: ", user_message)
-#             return user_message
-#     return ""
