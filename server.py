@@ -1,12 +1,71 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Text
 
-import requests
-
 from flask import Flask, request
+import requests
+import logging
 
 app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
+
+
+@dataclass
+class NotImplementedMessage:
+    message: dict
+    text: str = ""
+
+@dataclass
+class InteractiveButtonMessage:
+    message: dict
+    text: str = ""
+
+    def __post_init__(self):
+        self.set_message()
+
+    def set_message(self):
+        interactive = self.message.get("interactive")
+        self.text = interactive.get("button_reply").get("id")
+        app.logger.info("INTERACTIVE MESSAGE: %s", self.text)
+
+
+@dataclass
+class TextMessage:
+    message: dict
+    text: str = ""
+
+    def __post_init__(self):
+        self.set_message()
+
+    def set_message(self):
+        self.text = self.message.get("text").get("body")
+
+
+@dataclass
+class WhatsAppEvent:
+    event: Dict
+    message_types: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "interactive": InteractiveButtonMessage,
+            "text": TextMessage,
+        }
+    )
+
+    def get_event_message(self) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
+        event_changes = self.event["entry"][0]["changes"][0]
+        event_value = event_changes.get("value")
+        event_messages = event_value.get("messages")
+        if event_messages:
+            message = event_messages[0]
+            message_class = self.message_types[message.get("type")]
+            return message_class(message)
+        return NotImplementedMessage({})
+
+
+def logging_whatsapp_event():
+    # https://stackoverflow.com/questions/11093236/use-logging-print-the-output-of-pprint
+    app.logger.info(f"NEW WHATSAPP EVENT: \n {json.dumps(request.json, indent=4)}")
+
 
 RESPONSE_MESSAGES = [
     {
@@ -37,7 +96,7 @@ RESPONSE_MESSAGES = [
 class WhatsAppApiClient:
     url: str = "https://graph.facebook.com/v19.0/326737040513319/messages"
     headers = {
-        "Authorization": "Bearer EAARUraCBHf4BOwVsh63BR1ipOjwdD8lf8d7ZBf5K6thXTjwDpWHOQc2ggZCXDtsyKSb0lKzCuLEijmZCx5ZBdmpDOZBFZAwumQgsIatiyZAInkRZBHFSPtzUwvlUfo216t8kTZCd7xW8cTKLTlpZCyXZBvqOxqoTXLGpn0MHxcIpLFLXZCZAFag49eR3PEmrw2gT8M0x10qC8vKC98brOBrC2XZCQZD",
+        "Authorization": "Bearer EAARUraCBHf4BOZBevHmWkp9FGhFiILtoPItzSgc2trYBxcZAh26cvZApvMlNaFDF8ROXQGdgPGtFAxEawRuyFLesf7VX5gFoP3G5jaPjbeK3K9EJIgDOYQDJIF5zWbpUTaTfEC2qtizPzpNeH7PgvSFbAv11GNZBruiew72YIFG2pRS6IerpOZCrBiyA3mME4x8Jr83NAGo0hPyONMLwZD",
         "Content-Type": "application/json",
     }
 
@@ -98,12 +157,12 @@ def webhook():
             return "Invalid verify token", 500
         return request.args.get("hub.challenge")
     if request.method == "POST":
-        user_message = get_whatsapp_message(request)
-        messages = get_response_messages(user_message)
+        logging_whatsapp_event()
+        message = get_whatsapp_message(request)
+        messages = get_response_messages(message.text)
         wpp_client = WhatsAppApiClient()
         for rasa_message in messages:
             response_text, status_code = wpp_client.send_message(rasa_message)
-            print(response_text, status_code)
         return "ok", 200
 
 
@@ -114,16 +173,23 @@ def get_response_messages(user_message: Text):
     return RESPONSE_MESSAGES
 
 
-def get_whatsapp_message(request):
-    print("WHATSAPP EVENT: ", request.json)
-    value = request.json.get("entry")[0].get("changes")[0].get("value")
-    if value.get("messages"):
-        message = value.get("messages")[0]
-        if message.get('interactive'):
-            interactive = message.get('interactive')
-            vote = interactive.get("button_reply").get("id")
-            print("CONVERSATION COMMENT VOTE: ", vote)
-            return vote
-        else:
-            return value.get("messages")[0].get("text").get("body")
-    return ""
+def get_whatsapp_message(request) -> InteractiveButtonMessage | TextMessage | NotImplementedMessage:
+    whatsapp_event = WhatsAppEvent(event=request.json)
+    message = whatsapp_event.get_event_message()
+    return message
+
+# def get_whatsapp_message(request):
+#     print("WHATSAPP EVENT: ", request.json)
+#     value = request.json.get("entry")[0].get("changes")[0].get("value")
+#     if value.get("messages"):
+#         message = value.get("messages")[0]
+#         if message.get("interactive"):
+#             interactive = message.get("interactive")
+#             vote = interactive.get("button_reply").get("id")
+#             print("CONVERSATION COMMENT VOTE: ", vote)
+#             return vote
+#         else:
+#             user_message = value.get("messages")[0].get("text").get("body")
+#             print("USER MESSAGE: ", user_message)
+#             return user_message
+#     return ""
