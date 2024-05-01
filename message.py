@@ -58,6 +58,7 @@ class WhatsAppEvent:
             return message_class(message)
         return NotImplementedMessage({})
 
+    # TODO: check if self.event is a WhatsApp event
     def get_event_value_key(self, key: Text) -> Text | None:
         event_changes = self.event["entry"][0]["changes"][0]
         event_value = event_changes.get("value")
