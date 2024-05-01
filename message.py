@@ -44,6 +44,7 @@ class WhatsAppEvent:
             "text": TextMessage,
         }
     )
+    sender_id: Text = ""
 
     def __post_init__(self):
         self.set_recipient_phone()
@@ -64,11 +65,15 @@ class WhatsAppEvent:
         event_value = event_changes.get("value")
         return event_value.get(key)
 
+    def set_sender_id(self):
+        event_entry = self.event["entry"][0]
+        self.sender_id = event_entry["id"]
+
     def set_recipient_phone(self):
         contacts = self.get_event_value_key("contacts")
         if contacts:
             contact = contacts[0]
             phone_number = contact["wa_id"]
             if not re.search(r"^(\d{4}9)", phone_number):
-                phone_number = phone_number[:4] + '9' + phone_number[4:]
+                phone_number = phone_number[:4] + "9" + phone_number[4:]
             self.recipient_phone = f"+{phone_number}"
