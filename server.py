@@ -43,7 +43,7 @@ class WhatsAppApiClient:
 
 
 def verify_webhook(request):
-    if request.args.get("hub.verify_token") != "1234":
+    if request.args.get("hub.verify_token") != os.getenv("WPP_VERIFY_TOKEN", ""):
         return "Invalid verify token", 500
     return request.args.get("hub.challenge")
 
