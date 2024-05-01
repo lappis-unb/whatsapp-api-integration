@@ -29,7 +29,7 @@ def logging_whatsapp_post_request(response_text):
 
 @dataclass
 class WhatsAppApiClient:
-    url: Text = "https://graph.facebook.com/v19.0/326737040513319/messages"
+    url: Text = f"https://graph.facebook.com/v19.0/{os.getenv("WPP_PHONE_NUMBER_IDENTIFIER", "")}/messages"
     headers: Dict[Text, Text] = field(
         default_factory=lambda: (
             {
