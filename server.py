@@ -101,15 +101,70 @@ RESPONSE_MESSAGES = [
 
 
 # Reimplement this class with your message backend.
-@dataclass
-class ResponseService:
+class AnswersBackend:
 
-    message: InteractiveButtonMessage | TextMessage | NotImplementedMessage
-
-    def get_responses_to_message(self) -> list:
+    @staticmethod
+    def get_answers_to_message(
+        message: InteractiveButtonMessage | TextMessage | NotImplementedMessage,
+    ) -> list:
         if not self.message.text:
             return []
         return RESPONSE_MESSAGES
+
+
+@dataclass
+class WhatsappMessagesParser:
+
+    messages: list
+
+    def get_message_type(self, message: Any):
+        if message.get("buttons"):
+            return "interactive"
+        return "text"
+
+    def parse_messages(self):
+        parsed_messages = []
+        for message in self.messages:
+            message_type = self.get_message_type(message)
+            payload: Dict = {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": "+5561981178174",
+                "type": message_type,
+            }
+            if message_type == "interactive":
+                payload.update(
+                    {
+                        "interactive": {
+                            "type": "button",
+                            "body": {"text": message.get("text")},
+                            "action": {
+                                "buttons": [
+                                    {
+                                        "type": "reply",
+                                        "reply": {"id": "1", "title": "concordar"},
+                                    },
+                                    {
+                                        "type": "reply",
+                                        "reply": {"id": "-1", "title": "descordar"},
+                                    },
+                                    {
+                                        "type": "reply",
+                                        "reply": {"id": "0", "title": "pular"},
+                                    },
+                                ]
+                            },
+                        },
+                    }
+                )
+            else:
+                payload.update(
+                    {
+                        "text": {"body": message.get("text"), "preview_url": False},
+                    }
+                )
+            parsed_messages.append(payload)
+        return parsed_messages
 
 
 @dataclass
@@ -124,50 +179,7 @@ class WhatsAppApiClient:
         )
     )
 
-    def get_message_type(self, rasa_message: Any):
-        if rasa_message.get("buttons"):
-            return "interactive"
-        return "text"
-
     def send_message(self, rasa_message: Any):
-        message_type = self.get_message_type(rasa_message)
-        payload: Dict = {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": "+5561981178174",
-            "type": message_type,
-        }
-        if message_type == "interactive":
-            payload.update(
-                {
-                    "interactive": {
-                        "type": "button",
-                        "body": {"text": rasa_message.get("text")},
-                        "action": {
-                            "buttons": [
-                                {
-                                    "type": "reply",
-                                    "reply": {"id": "1", "title": "concordar"},
-                                },
-                                {
-                                    "type": "reply",
-                                    "reply": {"id": "-1", "title": "descordar"},
-                                },
-                                {
-                                    "type": "reply",
-                                    "reply": {"id": "0", "title": "pular"},
-                                },
-                            ]
-                        },
-                    },
-                }
-            )
-        else:
-            payload.update(
-                {
-                    "text": {"body": rasa_message.get("text"), "preview_url": False},
-                }
-            )
         response = requests.post(
             self.url, data=json.dumps(payload), headers=self.headers
         )
@@ -184,11 +196,11 @@ def respond_to_whatsapp_event(request):
     logging_whatsapp_event()
     whatsapp_event = WhatsAppEvent(event=request.json)
     message = whatsapp_event.get_event_message()
-    response_service = ResponseService(message)
-    responses = response_service.get_responses_to_message()
+    answers = AnswersBackend.get_answers_to_message(message)
+    wpp_messages = WhatsappMessagesParser(messages=answers).parse_messages()
     wpp_client = WhatsAppApiClient()
-    for response in responses:
-        wpp_client.send_message(response)
+    for message in wpp_messages:
+        wpp_client.send_message(message)
     return "ok", 200
 
 
