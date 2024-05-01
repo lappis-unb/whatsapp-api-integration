@@ -22,6 +22,10 @@ def logging_whatsapp_event():
     # https://stackoverflow.com/questions/11093236/use-logging-print-the-output-of-pprint
     app.logger.info(f"NEW WHATSAPP EVENT: \n {json.dumps(request.json, indent=4)}")
 
+def logging_whatsapp_post_request(response_text):
+    # https://stackoverflow.com/questions/11093236/use-logging-print-the-output-of-pprint
+    app.logger.info(f"NEW REQUEST TO WHATSAPP: \n {response_text}")
+
 
 @dataclass
 class WhatsAppApiClient:
@@ -51,12 +55,16 @@ def verify_webhook(request):
 def respond_to_whatsapp_event(request):
     logging_whatsapp_event()
     whatsapp_event = WhatsAppEvent(event=request.json)
+    app.logger.info(f"WPP EVENT {whatsapp_event.recipient_phone}")
     message = whatsapp_event.get_event_message()
     answers = AnswersBackend.get_answers_to_message(message)
-    wpp_messages = WhatsappMessagesParser(messages=answers).parse_messages()
+    wpp_messages = WhatsappMessagesParser(
+        answers, whatsapp_event.recipient_phone
+    ).parse_messages()
     wpp_client = WhatsAppApiClient()
     for message in wpp_messages:
-        wpp_client.send_message(message)
+        response_text, _ = wpp_client.send_message(message)
+        logging_whatsapp_post_request(response_text)
     return "ok", 200
 
 

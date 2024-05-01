@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Text
 from .message import InteractiveButtonMessage, TextMessage, NotImplementedMessage
 
 RESPONSE_MESSAGES = [
@@ -43,6 +43,7 @@ class AnswersBackend:
 class WhatsappMessagesParser:
 
     messages: list
+    recipent_phone: Text
 
     def get_message_type(self, message: Any):
         if message.get("buttons"):
@@ -56,7 +57,7 @@ class WhatsappMessagesParser:
             payload: Dict = {
                 "messaging_product": "whatsapp",
                 "recipient_type": "individual",
-                "to": "+5561981178174",
+                "to": f"{self.recipent_phone}",
                 "type": message_type,
             }
             if message_type == "interactive":
@@ -92,4 +93,3 @@ class WhatsappMessagesParser:
                 )
             parsed_messages.append(payload)
         return parsed_messages
-
