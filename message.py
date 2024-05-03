@@ -19,7 +19,7 @@ class InteractiveButtonMessage:
 
     def set_message(self):
         interactive = self.message.get("interactive")
-        self.text = interactive.get("button_reply").get("id")
+        self.text = str(interactive.get("button_reply").get("id"))
 
 
 @dataclass

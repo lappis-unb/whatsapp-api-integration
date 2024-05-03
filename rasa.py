@@ -1,46 +1,66 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Text
+from typing import Any, Dict, Text, List
 from .message import InteractiveButtonMessage, TextMessage, NotImplementedMessage
 
-RESPONSE_MESSAGES = [
-    {
-        "recipient_id": "257609550778186",
-        "text": "Olá, Eu sou a Duda, a assistente virtual da Plataforma Empurrando Juntas. Meu trabalho é descobrir a opinião das pessoas sobre determinados temas e para isso eu preciso da sua ajuda.  A suas opiniões serão enviadas para a nossa plataforma, conforme o nosso termo de uso https://www.ejparticipe.org/usage/.",
-    },
-    {
-        "recipient_id": "257609550778186",
-        "text": "Eu perguntei para algumas pessoas o que elas acham sobre o seguinte assunto:\nO que pode ser feito para superar os desafios da transformação digital do governo?",
-    },
-    {
-        "recipient_id": "257609550778186",
-        "text": "Vou te mandar o que me responderam e gostaria da sua opinião:",
-    },
-    {
-        "recipient_id": "257609550778186",
-        "text": "Simplicidade, simplicidade e sim+pli+ci+da+de. Ser digital não significa ser complexo. Essa é uma grande barreira a ser superada. \n O que você acha disso (0/97)?",
-        "buttons": [
-            {"title": "Concordar", "payload": "Concordar"},
-            {"title": "Discordar", "payload": "Discordar"},
-            {"title": "Pular", "payload": "Pular"},
-        ],
-    },
-]
 
+@dataclass
+class RasaBackend:
+    """
+    Integrates the server running the WhatsApp webhook with some local or external
+    service responsible for processing a message comming from WhatsApp.
 
-# Reimplement this class with your message backend.
-class AnswersBackend:
+    This class is for tests only. You should implements our consume some real Rasa instance
+    or any other service to decide what to do with the WhatsApp message.
+    """
+
+    answers: List[Dict[Text, Text]] = [
+        {
+            "recipient_id": "257609550778186",
+            "text": "Olá, Eu sou a Duda, a assistente virtual da Plataforma Empurrando Juntas. "
+            "Meu trabalho é descobrir a opinião das pessoas sobre determinados temas e "
+            "para isso eu preciso da sua ajuda.  A suas opiniões serão enviadas para "
+            "a nossa plataforma, conforme o nosso "
+            "termo de uso https://www.ejparticipe.org/usage/.",
+        },
+        {
+            "recipient_id": "257609550778186",
+            "text": "Eu perguntei para algumas pessoas o que elas acham sobre "
+            "o seguinte assunto:\nO que pode ser feito para superar os desafios da "
+            "transformação digital do governo?",
+        },
+        {
+            "recipient_id": "257609550778186",
+            "text": "Vou te mandar o que me responderam e gostaria da sua opinião:",
+        },
+        {
+            "recipient_id": "257609550778186",
+            "text": "Simplicidade, simplicidade e sim+pli+ci+da+de. Ser digital "
+            "não significa ser complexo. Essa é uma grande barreira a ser superada. "
+            "\n O que você acha disso (0/97)?",
+            "buttons": [
+                {"title": "Concordar", "payload": "Concordar"},
+                {"title": "Discordar", "payload": "Discordar"},
+                {"title": "Pular", "payload": "Pular"},
+            ],
+        },
+    ]
 
     @staticmethod
     def get_answers_to_message(
         message: InteractiveButtonMessage | TextMessage | NotImplementedMessage,
     ) -> list:
+        """Returns a list of Rasa messages to send back to WhatsApp."""
         if not message.text:
             return []
-        return RESPONSE_MESSAGES
+        return self.answers
 
 
 @dataclass
 class WhatsappMessagesParser:
+    """
+    Converts the AnswersBackend.get_answers_to_message() answers
+    to WhatsApp data format.
+    """
 
     messages: list
     recipent_phone: Text
