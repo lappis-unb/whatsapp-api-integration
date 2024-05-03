@@ -8,9 +8,9 @@ Instale o gestor de dependências Poetry:
 
     curl -sSL https://install.python-poetry.org | python3 -
 
-Crie um virtualenv com a versão 3.12 do Python:
+Crie um virtualenv com a versão 3 do Python:
 
-    poetry env use 3.12
+    poetry env use python3
 
 Habilite o virtualenv:
 
