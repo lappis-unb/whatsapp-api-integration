@@ -34,7 +34,7 @@ def respond_to_whatsapp_event(request):
     whatsapp_event = WhatsAppEvent(event=request.json)
     app.logger.info(f"WPP EVENT {whatsapp_event.recipient_phone}")
     message = whatsapp_event.get_event_message()
-    answers = RasaBackend.get_answers_to_message(message)
+    answers = RasaBackend().get_answers_to_message(message)
     wpp_messages = WhatsappMessagesParser(
         answers, whatsapp_event.recipient_phone
     ).parse_messages()
@@ -45,7 +45,7 @@ def respond_to_whatsapp_event(request):
     return "ok", 200
 
 
-@app.route("/webhooks/whatsapp", methods=["GET", "POST"])
+@app.route("/webhooks/whatsapp/webhook", methods=["GET", "POST"])
 def webhook():
     if request.method == "GET":
         return verify_webhook(request)
