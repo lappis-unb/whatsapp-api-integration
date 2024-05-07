@@ -29,10 +29,60 @@ def verify_webhook(request):
     return request.args.get("hub.challenge")
 
 
-def respond_to_whatsapp_event(request):
-    logging_whatsapp_event()
-    whatsapp_event = WhatsAppEvent(event=request.json)
-    message = whatsapp_event.get_event_message()
+def poll_event(request, message, whatsapp_event):
+    wpp_messages = [
+        {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": whatsapp_event.recipient_phone,
+            "type": "interactive",
+            "interactive": {
+                "type": "list",
+                "header": {
+                    "type": "text",
+                    "text": "Participe da nossa pesquisa sobre a praça Dominguinhos",
+                },
+                "body": {
+                    "text": "É verdade isso sobre a praça da Dominguinho em Votorantim??? (Praça José Ermírio de Moraes) \n"
+                    "O que você acha sobre essa opinião: **A praça é nossa mas temos que cobrar a prefeitura pra tratar ela com mais carinho**"
+                },
+                "footer": {"text": "<MESSAGE_FOOTER_TEXT>"},
+                "action": {
+                    "sections": [
+                        {
+                            "title": "Participe",
+                            "rows": [
+                                {
+                                    "id": "1",
+                                    "title": "Concordar",
+                                    "description": "",
+                                },
+                                {
+                                    "id": "2",
+                                    "title": "Discordar",
+                                    "description": "",
+                                },
+                                {
+                                    "id": "3",
+                                    "title": "Pular",
+                                    "description": "",
+                                },
+                            ],
+                        }
+                    ],
+                    "button": "options",
+                },
+            },
+        }
+    ]
+    pass
+    wpp_client = WhatsAppApiClient()
+    for message in wpp_messages:
+        response_text, _ = wpp_client.send_message(message)
+        logging_whatsapp_post_request(response_text)
+
+
+def opinion_bot_event(request, message, whatsapp_event):
     answers = RasaBackend().get_answers_to_message(message)
     wpp_messages = WhatsappMessagesParser(
         answers, whatsapp_event.recipient_phone
@@ -41,6 +91,17 @@ def respond_to_whatsapp_event(request):
     for message in wpp_messages:
         response_text, _ = wpp_client.send_message(message)
         logging_whatsapp_post_request(response_text)
+
+
+def respond_to_whatsapp_event(request):
+    whatsapp_event = WhatsAppEvent(event=request.json)
+    message = whatsapp_event.get_event_message()
+    logging_whatsapp_event()
+    if message.text == "/poll 15":
+        poll_event(request, message, whatsapp_event)
+    else:
+        opinion_bot_event(request, message, whatsapp_event)
+
     return "ok", 200
 
 
