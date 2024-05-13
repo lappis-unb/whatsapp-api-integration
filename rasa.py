@@ -59,11 +59,10 @@ class RasaBackend:
 @dataclass
 class WhatsappMessagesParser:
     """
-    Converts the AnswersBackend.get_answers_to_message() answers
-    to WhatsApp data format.
+    Converts RasaBackend.get_answers_to_message() to WhatsApp data format.
     """
 
-    messages: list
+    rasa_messages: list
     recipent_phone: Text
 
     def get_message_type(self, message: Any):
@@ -71,10 +70,26 @@ class WhatsappMessagesParser:
             return "interactive"
         return "text"
 
+    def parse_buttons(self, rasa_buttons: List) -> List:
+        wpp_buttons = []
+        wpp_options = {
+            "Concordar": {"id": "1", "title": "Concordar"},
+            "Discordar": {"id": "-1", "title": "Discordar"},
+            "Pular": {"id": "0", "title": "Pular"},
+            "Sim": {"id": "sim", "title": "sim"},
+            "Não": {"id": "não", "title": "não"},
+        }
+        for rasa_button in rasa_buttons:
+            rasa_button_title = rasa_button.get("title")
+            if rasa_button_title:
+                reply_option = wpp_options.get(rasa_button_title)
+                wpp_buttons.append({"type": "reply", "reply": reply_option})
+        return wpp_buttons
+
     def parse_messages(self):
         parsed_messages = []
-        for message in self.messages:
-            message_type = self.get_message_type(message)
+        for rasa_message in self.rasa_messages:
+            message_type = self.get_message_type(rasa_message)
             payload: Dict = {
                 "messaging_product": "whatsapp",
                 "recipient_type": "individual",
@@ -86,22 +101,11 @@ class WhatsappMessagesParser:
                     {
                         "interactive": {
                             "type": "button",
-                            "body": {"text": message.get("text")},
+                            "body": {"text": rasa_message.get("text")},
                             "action": {
-                                "buttons": [
-                                    {
-                                        "type": "reply",
-                                        "reply": {"id": "1", "title": "concordar"},
-                                    },
-                                    {
-                                        "type": "reply",
-                                        "reply": {"id": "-1", "title": "descordar"},
-                                    },
-                                    {
-                                        "type": "reply",
-                                        "reply": {"id": "0", "title": "pular"},
-                                    },
-                                ]
+                                "buttons": self.parse_buttons(
+                                    rasa_message.get("buttons")
+                                )
                             },
                         },
                     }
@@ -109,7 +113,10 @@ class WhatsappMessagesParser:
             else:
                 payload.update(
                     {
-                        "text": {"body": message.get("text"), "preview_url": False},
+                        "text": {
+                            "body": rasa_message.get("text"),
+                            "preview_url": False,
+                        },
                     }
                 )
             parsed_messages.append(payload)
