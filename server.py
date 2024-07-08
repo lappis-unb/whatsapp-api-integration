@@ -5,8 +5,8 @@ import os
 from flask import Flask, request
 
 from .message import WhatsAppEvent
-from .rasa import RasaBackend, WhatsappMessagesParser
-from .wpp_api_client import WhatsAppApiClient
+from .rasa import RasaBackend, CloudApiMessagesParser
+from .wpp_api_client import CloudApiClient
 
 
 app = Flask(__name__)
@@ -34,10 +34,10 @@ def respond_to_whatsapp_event(request):
     whatsapp_event = WhatsAppEvent(event=request.json)
     message = whatsapp_event.get_event_message()
     answers = RasaBackend().get_answers_to_message(message)
-    wpp_messages = WhatsappMessagesParser(
+    wpp_messages = CloudApiMessagesParser(
         answers, whatsapp_event.recipient_phone
     ).parse_messages()
-    wpp_client = WhatsAppApiClient()
+    wpp_client = CloudApiClient()
     for message in wpp_messages:
         response_text, _ = wpp_client.send_message(message)
         logging_whatsapp_post_request(response_text)

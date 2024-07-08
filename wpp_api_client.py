@@ -11,7 +11,7 @@ load_dotenv()
 
 
 @dataclass
-class WhatsAppApiClient:
+class CloudApiClient:
     authorization_token: Text = ""
     phone_number_identifier: Text = ""
     messages_endpoint: Text = ""
@@ -32,7 +32,13 @@ class WhatsAppApiClient:
             f"https://graph.facebook.com/v19.0/{self.phone_number_identifier}/messages"
         )
 
+    def authenticate(self):
+        pass
+
     def send_message(self, message: Any):
+        """
+        Send a Rasa dialogue response to WhatsApp Cloud API.
+        """
         response = requests.post(
             self.messages_endpoint, data=json.dumps(message), headers=self.headers
         )
