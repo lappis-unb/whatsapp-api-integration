@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Text, List
-from .message import InteractiveButtonMessage, TextMessage, NotImplementedMessage
+from .message import InteractiveButtonMessage, TextMessage, NotSupportedMessage
 
 
 @dataclass
@@ -48,7 +48,7 @@ class RasaBackend:
 
     def get_answers_to_message(
         self,
-        message: InteractiveButtonMessage | TextMessage | NotImplementedMessage,
+        message: InteractiveButtonMessage | TextMessage | NotSupportedMessage,
     ) -> list:
         """Returns a list of Rasa messages to send back to WhatsApp."""
         if not message.text:
@@ -57,7 +57,7 @@ class RasaBackend:
 
 
 @dataclass
-class WhatsappMessagesParser:
+class CloudApiMessagesParser:
     """
     Converts RasaBackend.get_answers_to_message() to WhatsApp data format.
     """
@@ -86,7 +86,7 @@ class WhatsappMessagesParser:
                 wpp_buttons.append({"type": "reply", "reply": reply_option})
         return wpp_buttons
 
-    def parse_messages(self):
+    def parse_messages(self) -> Dict:
         parsed_messages = []
         for rasa_message in self.rasa_messages:
             message_type = self.get_message_type(rasa_message)
