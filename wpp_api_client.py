@@ -42,4 +42,4 @@ class CloudApiClient:
         response = requests.post(
             self.messages_endpoint, data=json.dumps(message), headers=self.headers
         )
-        return response.text, response.status_code
+        return response

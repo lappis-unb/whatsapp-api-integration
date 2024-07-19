@@ -136,4 +136,4 @@ class SerproApiClient:
             response = self._request_on_message_endpoint(message_endpoint, message)
             if response.status_code == 401:
                 raise Exception
-        return response.text, response.status_code
+        return response

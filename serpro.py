@@ -25,6 +25,14 @@ class SerproApiMessagesParser:
             "Pular": {"id": "0", "titulo": "Pular"},
             "Sim": {"id": "sim", "titulo": "sim"},
             "Não": {"id": "não", "titulo": "não"},
+            "Confirmar": {
+                "id": "check_participant_authentication",
+                "titulo": "Confirmar",
+            },
+            "Encerrar": {
+                "id": "end_participant_conversation",
+                "titulo": "Encerrar",
+            },
         }
         for rasa_button in rasa_buttons:
             rasa_button_title = rasa_button.get("title")
