@@ -80,11 +80,11 @@ class CloudApiMessagesParser:
             "Não": {"id": "não", "title": "não"},
             "Confirmar": {
                 "id": "check_participant_authentication",
-                "titulo": "Confirmar",
+                "title": "Confirmar",
             },
             "Encerrar": {
                 "id": "end_participant_conversation",
-                "titulo": "Encerrar",
+                "title": "Encerrar",
             },
         }
         for rasa_button in rasa_buttons:
