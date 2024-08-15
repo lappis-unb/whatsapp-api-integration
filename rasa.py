@@ -71,28 +71,17 @@ class CloudApiMessagesParser:
         return "text"
 
     def parse_buttons(self, rasa_buttons: List) -> List:
-        wpp_buttons = []
-        wpp_options = {
-            "Concordar": {"id": "1", "title": "Concordar"},
-            "Discordar": {"id": "-1", "title": "Discordar"},
-            "Pular": {"id": "0", "title": "Pular"},
-            "Sim": {"id": "sim", "title": "sim"},
-            "Não": {"id": "não", "title": "não"},
-            "Confirmar": {
-                "id": "check_participant_authentication",
-                "title": "Confirmar",
-            },
-            "Encerrar": {
-                "id": "end_participant_conversation",
-                "title": "Encerrar",
-            },
-        }
+        cloud_buttons = []
         for rasa_button in rasa_buttons:
-            rasa_button_title = rasa_button.get("title")
-            if rasa_button_title:
-                reply_option = wpp_options.get(rasa_button_title)
-                wpp_buttons.append({"type": "reply", "reply": reply_option})
-        return wpp_buttons
+            button_title = rasa_button.get("title")
+            button_payload = rasa_button.get("title")
+            if button_title and button_payload:
+                cloud_button = {
+                    "type": "reply",
+                    "reply": {"id": button_payload, "title": button_title},
+                }
+                cloud_buttons.append(cloud_button)
+        return cloud_buttons
 
     def parse_messages(self) -> Dict:
         parsed_messages = []

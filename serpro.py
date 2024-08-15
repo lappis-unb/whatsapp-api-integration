@@ -18,28 +18,14 @@ class SerproApiMessagesParser:
         return "text"
 
     def parse_buttons(self, rasa_buttons: List) -> List:
-        wpp_buttons = []
-        wpp_options = {
-            "Concordar": {"id": "1", "titulo": "Concordar"},
-            "Discordar": {"id": "-1", "titulo": "Discordar"},
-            "Pular": {"id": "0", "titulo": "Pular"},
-            "Sim": {"id": "sim", "titulo": "sim"},
-            "Não": {"id": "não", "titulo": "não"},
-            "Confirmar": {
-                "id": "check_participant_authentication",
-                "titulo": "Confirmar",
-            },
-            "Encerrar": {
-                "id": "end_participant_conversation",
-                "titulo": "Encerrar",
-            },
-        }
+        serpro_buttons = []
         for rasa_button in rasa_buttons:
-            rasa_button_title = rasa_button.get("title")
-            if rasa_button_title:
-                reply_options = wpp_options.get(rasa_button_title)
-                wpp_buttons.append(reply_options)
-        return wpp_buttons
+            button_title = rasa_button.get("title")
+            button_payload = rasa_button.get("payload")
+            if button_title and button_payload:
+                serpro_button = {"id": button_payload, "titulo": button_title}
+                serpro_buttons.append(serpro_button)
+        return serpro_buttons
 
     def parse_messages(self) -> Dict:
         parsed_messages = []
