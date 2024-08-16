@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Text, List
-from .message import InteractiveButtonMessage, TextMessage, NotSupportedMessage
+from .message import InteractiveMessage, TextMessage, NotSupportedMessage
 
 
 @dataclass
@@ -48,7 +48,7 @@ class RasaBackend:
 
     def get_answers_to_message(
         self,
-        message: InteractiveButtonMessage | TextMessage | NotSupportedMessage,
+        message: InteractiveMessage | TextMessage | NotSupportedMessage,
     ) -> list:
         """Returns a list of Rasa messages to send back to WhatsApp."""
         if not message.text:
@@ -70,6 +70,13 @@ class CloudApiMessagesParser:
             return "interactive"
         return "text"
 
+    def get_interactive_type(self, message: Any):
+        buttons = message.get("buttons")
+        buttons: List = message.get("buttons")
+        if len(buttons) > 3:
+            return "list"
+        return "buttons"
+
     def parse_buttons(self, rasa_buttons: List) -> List:
         cloud_buttons = []
         for rasa_button in rasa_buttons:
@@ -83,6 +90,16 @@ class CloudApiMessagesParser:
                 cloud_buttons.append(cloud_button)
         return cloud_buttons
 
+    def parse_rows(self, rasa_buttons: List) -> List:
+        cloud_rows = []
+        for rasa_button in rasa_buttons:
+            button_title = rasa_button.get("title")
+            button_payload = rasa_button.get("payload")
+            if button_title and button_payload:
+                row = {"id": button_payload, "title": button_title, "description": ""}
+                cloud_rows.append(row)
+        return cloud_rows
+
     def parse_messages(self) -> Dict:
         parsed_messages = []
         for rasa_message in self.rasa_messages:
@@ -94,19 +111,46 @@ class CloudApiMessagesParser:
                 "type": message_type,
             }
             if message_type == "interactive":
-                payload.update(
-                    {
-                        "interactive": {
-                            "type": "button",
-                            "body": {"text": rasa_message.get("text")},
-                            "action": {
-                                "buttons": self.parse_buttons(
-                                    rasa_message.get("buttons")
-                                )
+                interactive_type = self.get_interactive_type(rasa_message)
+                if interactive_type == "buttons":
+                    payload.update(
+                        {
+                            "interactive": {
+                                "type": "button",
+                                "body": {"text": rasa_message.get("text")},
+                                "action": {
+                                    "buttons": self.parse_buttons(
+                                        rasa_message.get("buttons")
+                                    )
+                                },
                             },
-                        },
-                    }
-                )
+                        }
+                    )
+                elif interactive_type == "list":
+                    payload.update(
+                        {
+                            "interactive": {
+                                "type": "list",
+                                "header": {
+                                    "type": "text",
+                                    "text": "",
+                                },
+                                "body": {"text": rasa_message.get("text")},
+                                "footer": {"text": ""},
+                                "action": {
+                                    "button": "opções",
+                                    "sections": [
+                                        {
+                                            "title": "",
+                                            "rows": self.parse_rows(
+                                                rasa_message.get("buttons")
+                                            ),
+                                        }
+                                    ],
+                                },
+                            },
+                        }
+                    )
             else:
                 payload.update(
                     {

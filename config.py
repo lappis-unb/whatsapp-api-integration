@@ -17,5 +17,8 @@ class Config:
     SERPRO_BUTTONS_MESSAGES_URL = (
         f"{SERPRO_CLIENT_URL}/requisicao/mensagem/interativa-botoes"
     )
+    SERPRO_LIST_MESSAGES_URL = (
+        f"{SERPRO_CLIENT_URL}/requisicao/mensagem/interativa-lista"
+    )
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT = os.getenv("REDIS_PORT", "6379")

@@ -6,7 +6,7 @@ from .serpro_api_client import SerproApiClient
 from .wpp_api_client import CloudApiClient
 from .rasa import CloudApiMessagesParser
 from .serpro import SerproApiMessagesParser
-from .message import InteractiveButtonMessage, TextMessage, NotSupportedMessage
+from .message import InteractiveMessage, TextMessage, NotSupportedMessage
 
 
 @dataclass
@@ -79,7 +79,7 @@ class WhatsAppEvent:
     profile_name: Text = "Participante"
     message_types: Dict[str, Any] = field(
         default_factory=lambda: {
-            "interactive": InteractiveButtonMessage,
+            "interactive": InteractiveMessage,
             "text": TextMessage,
         }
     )
@@ -99,7 +99,7 @@ class WhatsAppEvent:
 
     def get_event_message(
         self,
-    ) -> InteractiveButtonMessage | TextMessage | NotSupportedMessage:
+    ) -> InteractiveMessage | TextMessage | NotSupportedMessage:
         event_messages: List = self.get_event_key("messages")
         if event_messages:
             message: Dict = event_messages[0]

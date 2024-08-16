@@ -68,8 +68,11 @@ class SerproApiClient:
         headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
 
-    def _message_is_interative(self, message: Any):
+    def _message_has_buttons(self, message: Any):
         return message.get("buttons")
+
+    def _message_has_secoes(self, message: Any):
+        return message.get("secoes")
 
     def authenticate(self, force_authentication=False):
         """
@@ -121,8 +124,10 @@ class SerproApiClient:
         )
 
     def _get_endpoint(self, message: Dict):
-        if self._message_is_interative(message):
+        if self._message_has_buttons(message):
             return Config.SERPRO_BUTTONS_MESSAGES_URL
+        if self._message_has_secoes(message):
+            return Config.SERPRO_LIST_MESSAGES_URL
         return Config.SERPRO_TEXT_MESSAGES_URL
 
     def send_message(self, message: Dict):

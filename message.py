@@ -9,7 +9,7 @@ class NotSupportedMessage:
 
 
 @dataclass
-class InteractiveButtonMessage:
+class InteractiveMessage:
     message: Dict
     text: Text = ""
 
@@ -17,8 +17,11 @@ class InteractiveButtonMessage:
         self.set_message()
 
     def set_message(self):
-        interactive = self.message.get("interactive")
-        self.text = str(interactive.get("button_reply").get("id"))
+        interactive: Dict = self.message.get("interactive")
+        if interactive.get("type") == "button_reply":
+            self.text = str(interactive.get("button_reply").get("id"))
+        if interactive.get("type") == "list_reply":
+            self.text = str(interactive.get("list_reply").get("id"))
 
 
 @dataclass
