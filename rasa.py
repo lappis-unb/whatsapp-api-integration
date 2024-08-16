@@ -74,7 +74,7 @@ class CloudApiMessagesParser:
         cloud_buttons = []
         for rasa_button in rasa_buttons:
             button_title = rasa_button.get("title")
-            button_payload = rasa_button.get("title")
+            button_payload = rasa_button.get("payload")
             if button_title and button_payload:
                 cloud_button = {
                     "type": "reply",
