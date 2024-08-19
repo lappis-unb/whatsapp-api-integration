@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 import json
-from typing import Dict, Text, Any
 import os
-import redis
+from typing import Any, Dict, Text
 
+import redis
 import requests
 
 from dotenv import load_dotenv
 
-from .config import Config
+from ..config import Config
 
 load_dotenv()
 

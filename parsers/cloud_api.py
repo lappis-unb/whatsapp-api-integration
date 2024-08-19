@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Text, List
-from .message import InteractiveMessage, TextMessage, NotSupportedMessage
+from ..message import InteractiveMessage, TextMessage, NotSupportedMessage
 
 
 @dataclass
@@ -59,7 +59,7 @@ class RasaBackend:
 @dataclass
 class CloudApiMessagesParser:
     """
-    Converts RasaBackend.get_answers_to_message() to WhatsApp data format.
+    Converts RasaBackend.get_answers_to_message() to WhatsApp Cloud API data format.
     """
 
     rasa_messages: list

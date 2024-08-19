@@ -1,4 +1,4 @@
-from .config import Config
+from ..config import Config
 from dataclasses import dataclass
 from typing import Any, Dict, Text, List
 
@@ -6,7 +6,7 @@ from typing import Any, Dict, Text, List
 @dataclass
 class SerproApiMessagesParser:
     """
-    Converts RasaBackend.get_answers_to_message() to WhatsApp data format.
+    Converts RasaBackend.get_answers_to_message() to Serpro API data format.
     """
 
     rasa_messages: list

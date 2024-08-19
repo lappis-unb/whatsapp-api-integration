@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Text
 import re
 
-from .serpro_api_client import SerproApiClient
-from .wpp_api_client import CloudApiClient
-from .rasa import CloudApiMessagesParser
-from .serpro import SerproApiMessagesParser
+from .clients.serpro_api_client import SerproApiClient
+from .clients.cloud_api_client import CloudApiClient
+from .parsers.cloud_api import CloudApiMessagesParser
+from .parsers.serpro import SerproApiMessagesParser
 from .message import InteractiveMessage, TextMessage, NotSupportedMessage
 
 

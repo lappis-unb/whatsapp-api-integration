@@ -53,6 +53,17 @@ com esse serviço.
 
 # Integração no WhatsApp
 
+Todas as mensagens respondidas pelo Rasa serão convertidas para o padrão JSON
+esperado tanto pela API do Serpro quanto pela API do Cloud API. Isso implica que
+o Rasa é independente do canal em que ele está conectado. No momento, todos os textos 
+e botões definifidos no arquivo de domínio são enviados para o WhatsApp na integra, com
+execeção de mensagens que utilizem mais de três botões.
+
+A API do WhatsApp não permite mensagens do tipo interativo terem mais de três botões, 
+mas isso não é um limitação do Rasa. Por isso, quando o canal for o WhatsApp, os módulos
+de integração irão converter mensagens com mais de três botões para o tipo interativo
+de lista.
+
 ## WhatsApp Cloud API
 
 **1. Solicite um número de testes**
